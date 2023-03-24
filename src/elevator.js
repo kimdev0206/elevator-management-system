@@ -10,6 +10,7 @@ const elevatorState = {
 class Elevator {
   constructor() {
     this.currentFloor = 1;
+    this.passengerCount = 0;
     this.distance = 0;
     this.direction;
     this.tasks = [];
@@ -21,19 +22,24 @@ class Elevator {
   }
 
   displayTasks() {
+    console.log("##############################################################");
     console.log(
       util.inspect(`남은 작업: ${this.tasks.length}`, inspectOptions),
-      util.inspect(this.tasks, inspectOptions),
-      util.inspect(`이동될 거리: ${this.distance}`, inspectOptions)
+      util.inspect(this.tasks, inspectOptions)
     );
+    console.log("##############################################################");
+  }
+
+  displayProcessing(state) {
+    console.log(`[${state.padEnd(4, " ")}]: ${this.currentFloor.toString().padStart(2, " ")}층 | 남은 거리: ${this.distance} | 남은 작업수: ${this.tasks.length} | 남은 승객수: ${this.passengerCount}`)
   }
 
   setTasks() {
-    this.tasks.push(new Passenger({ currentFloor: 1, targetFloor: 10 }));
-    this.tasks.push(new Passenger({ currentFloor: 2, targetFloor: 7 }));
-    this.tasks.push(new Passenger({ currentFloor: 7, targetFloor: 2 }));
-    this.tasks.push(new Passenger({ currentFloor: 1, targetFloor: 5 }));
-    this.tasks.push(new Passenger({ currentFloor: 1, targetFloor: 3 }));
+    this.tasks.push(new Passenger({ currentFloor: 3, targetFloor: 9 }));
+    this.tasks.push(new Passenger({ currentFloor: 4, targetFloor: 6 }));
+    this.tasks.push(new Passenger({ currentFloor: 5, targetFloor: 2 }));
+    this.tasks.push(new Passenger({ currentFloor: 7, targetFloor: 4 }));
+    this.tasks.push(new Passenger({ currentFloor: 3, targetFloor: 9 }));
   }
 
   sort() {
@@ -43,22 +49,45 @@ class Elevator {
   }
 
   setDirection() {
-    const { currentFloor, targetFloor } = this.tasks[0];
-    this.direction = Math.sign(targetFloor - currentFloor);
+    this.direction = this.tasks[0].direction;
   }
 
   setDistance() {
     this.tasks.forEach(task => {
       const distance = task.targetFloor - task.currentFloor;
-      const curDirection = Math.sign(distance);
 
-      if (this.direction !== curDirection) {
+      if (this.direction !== task.direction) {
         return;
       }
 
-      this.currentFloor = Math.min(this.currentFloor, task.currentFloor);
       this.distance = Math.max(this.distance, Math.abs(distance));
     })
+  }
+
+  getHandleableTasks(handleAction) {
+    return this.tasks.filter(task => {
+      return (this.direction === task.direction)
+        && (this.currentFloor === task[handleAction]);
+    });
+  }
+
+  handleInPassenger() {
+    const targets = this.getHandleableTasks("currentFloor");
+
+    this.passengerCount += targets.length;
+    this.displayProcessing("IN")
+  }
+
+  handleOutPassenger() {
+    const targets = this.getHandleableTasks("targetFloor");
+
+    targets.forEach(target => {
+      const index = this.tasks.indexOf(target);
+      this.tasks.splice(index, 1);
+    })
+
+    this.passengerCount -= targets.length;
+    this.displayProcessing("OUT")
   }
 }
 

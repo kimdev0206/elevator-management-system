@@ -9,6 +9,7 @@ class Passenger {
   constructor({ currentFloor, targetFloor }) {
     this.currentFloor = currentFloor || getRandomNumber();
     this.targetFloor = targetFloor || getRandomNumber();
+    this.direction = Math.sign(this.targetFloor - this.currentFloor);
   }
 }
 

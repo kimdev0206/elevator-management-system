@@ -1,34 +1,38 @@
-const util = require("util");
 const { elevatorState, Elevator } = require("./elevator");
-const { inspectOptions } = require("./utils");
 
 (function main() {
   const elevator = new Elevator();
   elevator.displayTasks();
 
   const interval = setInterval(() => {
-    if (elevator.currentFloor === elevator.tasks[0].targetFloor) {
-      console.log(
-        util.inspect(
-          `[STOP]: ${elevator.currentFloor}층 도착, 남은거리: ${elevator.distance}`, inspectOptions
-        )
-      );
+    const inPassengerCount = elevator.getHandleableTasks("currentFloor").length;
+    const outPassengerCount = elevator.getHandleableTasks("targetFloor").length;
 
-      elevator.tasks.shift();
-    } else {
-      console.log(
-        util.inspect(
-          `[${elevatorState[elevator.direction]}]: ${elevator.currentFloor}층, 남은거리: ${elevator.distance}`, inspectOptions
-        )
-      );
+    if (inPassengerCount) {
+      elevator.handleInPassenger();
     }
 
-    if (elevator.distance === 0) {
+    if (outPassengerCount) {
+      elevator.handleOutPassenger();
+    }
+
+    if (!(inPassengerCount || outPassengerCount)) {
+      elevator.displayProcessing(elevatorState[elevator.direction]);
+    }
+
+    if (!elevator.distance) {
+      elevator.sort();
+      elevator.setDirection();
+      elevator.setDistance();
+    }
+
+    if (!elevator.tasks.length
+      && !elevator.passengerCount) {
       clearInterval(interval);
       elevator.displayTasks();
     }
 
-    elevator.currentFloor += 1;
+    elevator.currentFloor += elevator.direction;
     elevator.distance -= 1;
   }, 1000);
 })();
