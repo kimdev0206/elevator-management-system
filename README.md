@@ -73,5 +73,5 @@
 Download [Node.js](https://nodejs.org/ko/download/).
 
 ```bash
-node src/main.js
+node src/index.js
 ```

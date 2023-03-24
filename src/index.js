@@ -5,8 +5,8 @@ const { elevatorState, Elevator } = require("./elevator");
   elevator.displayTasks();
 
   const interval = setInterval(() => {
-    const inPassengerCount = elevator.getHandleableTasks("currentFloor").length;
-    const outPassengerCount = elevator.getHandleableTasks("targetFloor").length;
+    const inPassengerCount = elevator.getHandleableTasks("currentFloor")?.length;
+    const outPassengerCount = elevator.getHandleableTasks("targetFloor")?.length;
 
     if (inPassengerCount) {
       elevator.handleInPassenger();
