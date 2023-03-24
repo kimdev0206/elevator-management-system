@@ -1,8 +1,7 @@
-function getRandomNumber() {
-  const max = 10;
-  const min = 1;
+const { MAX_FLOOR, MIN_FLOOR } = require("./constans");
 
-  return Math.floor(Math.random() * (max - min + 1) + min);
+function getRandomNumber() {
+  return Math.floor(Math.random() * (MAX_FLOOR - MIN_FLOOR + 1) + MIN_FLOOR);
 }
 
 class Passenger {

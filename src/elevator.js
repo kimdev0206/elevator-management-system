@@ -1,6 +1,6 @@
 const util = require("util");
 const Passenger = require("./Passenger");
-const { inspectOptions } = require("./utils");
+const { INSPECT_OPTIONS, MAX_FLOOR, MIN_FLOOR } = require("./constans");
 
 const elevatorState = {
   [1]: "UP",
@@ -12,11 +12,11 @@ class Elevator {
     this.currentFloor = 1;
     this.passengerCount = 0;
     this.distance = 0;
-    this.direction;
-    this.tasks = [];
+    this.direction = 1;
+    this.tasks = new Map();
 
+    this.setFloorQueues();
     this.setTasks();
-    this.sort();
     this.setDirection();
     this.setDistance();
   }
@@ -24,8 +24,8 @@ class Elevator {
   displayTasks() {
     console.log("##############################################################");
     console.log(
-      util.inspect(`남은 작업: ${this.tasks.length}`, inspectOptions),
-      util.inspect(this.tasks, inspectOptions)
+      util.inspect(`남은 작업: ${this.tasks.size}`, INSPECT_OPTIONS),
+      util.inspect(this.tasks, INSPECT_OPTIONS),
     );
     console.log("##############################################################");
   }
@@ -34,40 +34,47 @@ class Elevator {
     console.log(`[${state.padEnd(4, " ")}]: ${this.currentFloor.toString().padStart(2, " ")}층 | 남은 거리: ${this.distance} | 남은 작업수: ${this.tasks.length} | 남은 승객수: ${this.passengerCount}`)
   }
 
-  setTasks() {
-    this.tasks.push(new Passenger({ currentFloor: 3, targetFloor: 9 }));
-    this.tasks.push(new Passenger({ currentFloor: 4, targetFloor: 6 }));
-    this.tasks.push(new Passenger({ currentFloor: 5, targetFloor: 2 }));
-    this.tasks.push(new Passenger({ currentFloor: 7, targetFloor: 4 }));
-    this.tasks.push(new Passenger({ currentFloor: 3, targetFloor: 9 }));
+  setFloorQueues() {
+    for (let i = MIN_FLOOR; i <= MAX_FLOOR; i++) {
+      this.tasks.set(i, []);
+    }
   }
 
-  sort() {
-    this.tasks.sort((a, b) => a.currentFloor - b.currentFloor
-      || a.targetFloor - b.targetFloor
-    );
+  setTasks() {
+    this.tasks.get(3).push(new Passenger({ currentFloor: 3, targetFloor: 9 }));
+    this.tasks.get(4).push(new Passenger({ currentFloor: 4, targetFloor: 6 }));
+    this.tasks.get(5).push(new Passenger({ currentFloor: 5, targetFloor: 2 }));
+    this.tasks.get(7).push(new Passenger({ currentFloor: 7, targetFloor: 4 }));
+    this.tasks.get(3).push(new Passenger({ currentFloor: 3, targetFloor: 9 }));
   }
 
   setDirection() {
-    this.direction = this.tasks[0].direction;
+    const [, queue] = Array.from(this.tasks).find(([, queue]) => queue.length
+    );
+    this.direction = queue[0].direction;
   }
 
   setDistance() {
-    this.tasks.forEach(task => {
-      const distance = task.targetFloor - task.currentFloor;
+    const queues = Array.from(this.tasks).filter(([, queue]) => queue.length);
 
-      if (this.direction !== task.direction) {
-        return;
-      }
+    queues.forEach(([, queue]) => {
+      queue.forEach(task => {
+        const distance = task.targetFloor - task.currentFloor;
 
-      this.distance = Math.max(this.distance, Math.abs(distance));
+        if (this.direction !== task.direction) {
+          return;
+        }
+
+        this.distance = Math.max(this.distance, Math.abs(distance));
+      })
     })
   }
 
   getHandleableTasks(handleAction) {
-    return this.tasks.filter(task => {
-      return (this.direction === task.direction)
-        && (this.currentFloor === task[handleAction]);
+    const currentFloorQueue = this.tasks[this[handleAction]];
+
+    return currentFloorQueue?.filter(task => {
+      return this.direction === task.direction;
     });
   }
 
