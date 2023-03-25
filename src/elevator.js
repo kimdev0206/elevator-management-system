@@ -1,6 +1,6 @@
 const util = require("util");
 const Passenger = require("./Passenger");
-const { INSPECT_OPTIONS, MAX_FLOOR, MIN_FLOOR } = require("./constans");
+const { INSPECT_OPTIONS, MAX_FLOOR, MIN_FLOOR } = require("./constants");
 
 const elevatorState = {
   [1]: "UP",

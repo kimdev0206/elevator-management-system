@@ -1,38 +1,37 @@
-const { elevatorState, Elevator } = require("./elevator");
+const { elevatorDirection, ElevatorManager } = require("./elevator");
 
 (function main() {
-  const elevator = new Elevator();
-  elevator.displayTasks();
+  const manager = new ElevatorManager();
+  manager.displayTasks();
 
   const interval = setInterval(() => {
-    const inPassengerCount = elevator.getHandleableTasks("currentFloor")?.length;
-    const outPassengerCount = elevator.getHandleableTasks("targetFloor")?.length;
+    const inPassengerCount = manager.getInPassenger().length;
+    const outPassengerCount = manager.getOutPassenger().length;
 
     if (inPassengerCount) {
-      elevator.handleInPassenger();
+      manager.handleInPassenger();
     }
 
     if (outPassengerCount) {
-      elevator.handleOutPassenger();
+      manager.handleOutPassenger();
     }
 
     if (!(inPassengerCount || outPassengerCount)) {
-      elevator.displayProcessing(elevatorState[elevator.direction]);
+      manager.displayHandling(elevatorDirection[manager.direction]);
     }
 
-    if (!elevator.distance) {
-      elevator.sort();
-      elevator.setDirection();
-      elevator.setDistance();
+    if (!manager.distance) {
+      manager.setDirection();
+      manager.setDistance();
     }
 
-    if (!elevator.tasks.length
-      && !elevator.passengerCount) {
+    if ((!manager.distance)
+      && (!manager.passengers.length)) {
       clearInterval(interval);
-      elevator.displayTasks();
+      manager.displayTasks();
     }
 
-    elevator.currentFloor += elevator.direction;
-    elevator.distance -= 1;
+    manager.currentFloor += manager.direction;
+    manager.distance -= 1;
   }, 1000);
 })();

@@ -1,4 +1,4 @@
-const { MAX_FLOOR, MIN_FLOOR } = require("./constans");
+const { MAX_FLOOR, MIN_FLOOR } = require("./constants");
 
 function getRandomNumber() {
   return Math.floor(Math.random() * (MAX_FLOOR - MIN_FLOOR + 1) + MIN_FLOOR);
