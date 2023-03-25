@@ -5,6 +5,11 @@ const { elevatorDirection, ElevatorManager } = require("./elevator");
   manager.displayTasks();
 
   const interval = setInterval(() => {
+    if (!manager.tasks.length && !manager.passengers.length) {
+      clearInterval(interval);
+      manager.displayTasks();
+    }
+
     const inPassengerCount = manager.getInPassenger().length;
     const outPassengerCount = manager.getOutPassenger().length;
 
@@ -23,12 +28,6 @@ const { elevatorDirection, ElevatorManager } = require("./elevator");
     if (!manager.distance) {
       manager.setDirection();
       manager.setDistance();
-    }
-
-    if ((!manager.distance)
-      && (!manager.passengers.length)) {
-      clearInterval(interval);
-      manager.displayTasks();
     }
 
     manager.currentFloor += manager.direction;
