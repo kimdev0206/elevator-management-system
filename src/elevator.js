@@ -48,61 +48,46 @@ class ElevatorManager {
   }
 
   setTasks() {
-    this.tasks.get(3)["UP"].push(new Passenger({ currentFloor: 3, targetFloor: 9 }));
-    this.tasks.get(4)["UP"].push(new Passenger({ currentFloor: 4, targetFloor: 6 }));
-    this.tasks.get(5)["DOWN"].push(new Passenger({ currentFloor: 5, targetFloor: 2 }));
-    this.tasks.get(7)["DOWN"].push(new Passenger({ currentFloor: 7, targetFloor: 4 }));
-    this.tasks.get(3)["UP"].push(new Passenger({ currentFloor: 3, targetFloor: 9 }));
-  }
+    const requests = [
+      new Passenger({ currentFloor: 3, targetFloor: 9 }),
+      new Passenger({ currentFloor: 4, targetFloor: 6 }),
+      new Passenger({ currentFloor: 5, targetFloor: 2 }),
+      new Passenger({ currentFloor: 7, targetFloor: 4 }),
+      new Passenger({ currentFloor: 3, targetFloor: 9 }),
+    ]
 
-  getTask() {
+    this.direction = requests[0].direction;
 
-  }
+    while (requests.length) {
+      const request = requests.pop();
+      const direction = elevatorDirection[request.direction];
 
-  getFloorWithTask() {
-    const [, floor] = Array.from(this.tasks).find(([, floor]) => {
-      for (const direction in floor) {
-        if (floor[direction].length) {
-          return true;
-        }
-      }
-    });
-
-    return floor;
-  }
-
-  setDirection() {
-    const floor = this.getFloorWithTask();
-
-    for (const direction in floor) {
-      if (floor[direction].length) {
-        this.direction = floor[direction][0].direction;
-        return
-      }
+      this.tasks.get(request.currentFloor)[direction].push(request);
     }
   }
 
-  setDistance() {
-    const floor = this.getFloorWithTask();
+  getTasksWithDirection() {
     const direction = elevatorDirection[this.direction];
 
-    for (
-      let i = 0;
-      i < ElevatorManager.ELEVATOR_CAPACITY - this.passengers.length;
-      i++
-    ) {
-      const task = floor[direction][i];
-      if (!task) {
-        break;
-      }
+    return Array.from(this.tasks)
+      .filter(([, floor]) => floor[direction].length)
+      .map(([, floor]) => floor[direction])
+      .flat();
+  }
 
-      const distanceInTask = Math.abs(task.targetFloor - task.currentFloor);
-      const distanceBetweenTaskAndCurrent = Math.abs(task.currentFloor - this.currentFloor);
+  setDirection() {
+    // +++ 메서드가 호출되는 시점에 요청큐에서 조회되는 요청에 따름
+  }
 
-      this.distance = Math.max(
-        this.distance,
-        distanceInTask + distanceBetweenTaskAndCurrent
-      );
+  setDistance() {
+    const leftCapacity = ElevatorManager.ELEVATOR_CAPACITY - this.passengers.length;
+    const tasks = this.getTasksWithDirection().slice(0, leftCapacity);
+
+    for (const task of tasks) {
+      const distanceFollowing = Math.abs(task.targetFloor - task.currentFloor);
+      const distancePreceding = Math.abs(task.currentFloor - this.currentFloor);
+
+      this.distance = Math.max(this.distance, distanceFollowing + distancePreceding);
     }
   }
 
