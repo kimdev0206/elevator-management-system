@@ -9,8 +9,7 @@ class ElevatorManager {
   };
 
   constructor(concurrency) {
-    this.concurrency = concurrency; // +++ 2
-    this.running = 0;               // +++ 2 x 5 = 10
+    this.concurrency = concurrency;    
     this.tasks = [];
     this.setTasks();
   }
@@ -23,7 +22,7 @@ class ElevatorManager {
     this.tasks.push(new Passenger({ currentFloor: 3, targetFloor: 9 }));
   }
 
-  runElevator(elevator) {
+  run(elevator) {
     return new Promise((resolve, reject) => {
       const intervalID = setInterval(() => {
         const inPassengerCount = elevator.getInPassenger().length;
@@ -58,6 +57,10 @@ class ElevatorManager {
         }
       }, 1000);
     });
+  }
+
+  stop(intervalID) {
+    clearInterval(intervalID);
   }
 
   displayTasks() {

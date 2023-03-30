@@ -1,25 +1,24 @@
-const util = require("util");
-const { INSPECT_OPTIONS } = require("./constants");
-
 class Elevator {
   static CAPACITY = 5;
+  distance = 0;
+  direction = 1;
+  passengers = [];
 
-  constructor(ID, manager) {
+  constructor(ID, startFloor, manager) {
     this.ID = ID;
+    this.currentFloor = startFloor;
     this.manager = manager;
-
-    this.currentFloor = 5;
-    this.distance = 0;
-    this.direction = 1;
-    this.passengers = [];
 
     this.setDirection();
     this.setDistance();
   }
 
-  getTasksWithDirection() {
+  getTasksWithSameDirection({ reverse = false }) {
     return this.manager.tasks
-      .filter(task => this.direction === task.direction)
+      .filter(task => reverse
+        ? this.direction !== task.direction
+        : this.direction === task.direction
+      )
       .filter(task => Math.sign(this.direction) > 0
         ? (this.currentFloor <= task.currentFloor)
         : (this.currentFloor >= task.currentFloor));
@@ -27,12 +26,24 @@ class Elevator {
 
   setDirection() {
     const latestTask = this.manager.tasks[0];
+
+    if (latestTask.currentFloor === this.currentFloor) {
+      this.direction = latestTask.direction;
+      return;
+    }
+
     this.direction = Math.sign(latestTask.currentFloor - this.currentFloor);
   }
 
   setDistance() {
+    let tasks = this.getTasksWithSameDirection({ reverse: false });
+
+    if (!tasks.length) {
+      tasks = this.getTasksWithSameDirection({ reverse: true });
+    }
+
     const leftCapacity = Elevator.CAPACITY - this.passengers.length;
-    const tasks = this.getTasksWithDirection().slice(0, leftCapacity - 1);
+    tasks = tasks.slice(0, leftCapacity - 1);
 
     let maxDistanceTask;
     for (const task of tasks) {
@@ -88,7 +99,7 @@ class Elevator {
   }
 
   displayHandling(state) {
-    console.log(`[E${this.ID}:${state.padEnd(4, " ")}]: ${this.currentFloor.toString().padStart(2, " ")}층 | 남은 거리: ${this.distance} | 남은 승객수: ${this.passengers.length} | 남은 작업수: ${this.manager.tasks.length}`)
+    console.log(`[${this.ID}호기:${state.padEnd(4, " ")}]: ${this.currentFloor.toString().padStart(2, " ")}층 | 남은 거리: ${this.distance} | 남은 승객수: ${this.passengers.length} | 남은 작업수: ${this.manager.tasks.length}`)
   }
 }
 

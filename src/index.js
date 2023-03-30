@@ -1,7 +1,11 @@
 const ElevatorManager = require("./elevatorManager");
 const Elevator = require("./elevator");
-const { clearInterval } = require("timers");
+
+// ✨ You can customize. ✨
+// const CONCURRENCY = 1;
+// const START_FLOOR_LIST = [5];
 const CONCURRENCY = 2;
+const START_FLOOR_LIST = [5, 1];
 
 (async function main() {
   const manager = new ElevatorManager(CONCURRENCY);
@@ -10,16 +14,24 @@ const CONCURRENCY = 2;
   const elevatorStates = [];
 
   for (let elevatorID = 1; elevatorID <= CONCURRENCY; elevatorID++) {
-    const elevator = new Elevator(elevatorID, manager);
-    elevatorStates.push(manager.runElevator(elevator));
+    const elevator = new Elevator(
+      elevatorID,
+      START_FLOOR_LIST.pop(),
+      manager
+    );
+
+    elevatorStates.push(manager.run(elevator));
   }
 
-  await Promise.all(elevatorStates)
-    .then((intervalID) => {
-      clearInterval(intervalID)
-      manager.displayTasks();
+  try {
+    const result = await Promise.allSettled(elevatorStates);
 
-    }).catch((err) => {
-      console.err(err);
-    })
+    for (const each of result) {
+      manager.stop(each.value);
+    }
+  } catch (err) {
+    console.err(err);
+  } finally {
+    manager.displayTasks();
+  }
 })();
