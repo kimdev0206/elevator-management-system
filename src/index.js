@@ -1,9 +1,8 @@
 const ElevatorManager = require("./elevatorManager");
 const Elevator = require("./elevator");
+require("./log");
 
 // ✨ You can customize. ✨
-// const CONCURRENCY = 1;
-// const START_FLOOR_LIST = [5];
 const CONCURRENCY = 2;
 const START_FLOOR_LIST = [5, 1];
 
