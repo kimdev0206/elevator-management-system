@@ -1,6 +1,6 @@
-const ElevatorManager = require("./elevatorManager");
-const Elevator = require("./elevator");
-require("./log");
+const ElevatorManager = require("./src/elevatorManager");
+const Elevator = require("./src/elevator");
+require("./src/log");
 
 // ✨ You can customize. ✨
 const CONCURRENCY = 2;
