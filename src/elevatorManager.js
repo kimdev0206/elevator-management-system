@@ -3,13 +3,14 @@ const { INSPECT_OPTIONS } = require("./constants");
 const Passenger = require("./Passenger");
 
 class ElevatorManager {
+  static FILE_PATH = "./current-floor-list.json";
   static DIRECTION = {
     [1]: "UP",
     [-1]: "DOWN",
   };
 
-  constructor(concurrency) {
-    this.concurrency = concurrency;
+  constructor(size) {
+    this.size = size;
     this.tasks = [];
     this.setTasks();
   }
@@ -76,6 +77,34 @@ class ElevatorManager {
     console.log(
       "##############################################################"
     );
+  }
+
+  async loadState(fs) {
+    const states = await fs.readFile(ElevatorManager.FILE_PATH, {
+      encoding: "utf8",
+    });
+
+    if (!states) {
+      return Array.from({ length: this.size }, (_, i) => ({
+        ID: i + 1,
+        currentFloor: 1,
+      }));
+    }
+
+    return JSON.parse(states);
+  }
+
+  async saveState({ fs, elevators }) {
+    const states = [];
+
+    for (const { ID, currentFloor } of elevators) {
+      states.push({
+        ID,
+        currentFloor,
+      });
+    }
+
+    await fs.writeFile(ElevatorManager.FILE_PATH, JSON.stringify(states));
   }
 }
 
