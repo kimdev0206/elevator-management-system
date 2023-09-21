@@ -15,13 +15,16 @@ class Elevator {
 
   getTasksWithSameDirection({ reverse = false }) {
     return this.manager.tasks
-      .filter(task => reverse
-        ? this.direction !== task.direction
-        : this.direction === task.direction
+      .filter((task) =>
+        reverse
+          ? this.direction !== task.direction
+          : this.direction === task.direction
       )
-      .filter(task => Math.sign(this.direction) > 0
-        ? (this.currentFloor <= task.currentFloor)
-        : (this.currentFloor >= task.currentFloor));
+      .filter((task) =>
+        Math.sign(this.direction) > 0
+          ? this.currentFloor <= task.currentFloor
+          : this.currentFloor >= task.currentFloor
+      );
   }
 
   setDirection() {
@@ -56,21 +59,27 @@ class Elevator {
     }
 
     if (this.direction === maxDistanceTask.direction) {
-      this.distance += Math.abs(this.currentFloor - maxDistanceTask.currentFloor);
+      this.distance += Math.abs(
+        this.currentFloor - maxDistanceTask.currentFloor
+      );
     }
   }
 
   getInPassenger() {
-    return this.manager.tasks.filter(task => {
-      return (this.direction === task.direction)
-        && (this.currentFloor === task.currentFloor);
+    return this.manager.tasks.filter((task) => {
+      return (
+        this.direction === task.direction &&
+        this.currentFloor === task.currentFloor
+      );
     });
   }
 
   getOutPassenger() {
-    return this.passengers.filter(passenger => {
-      return (this.direction === passenger.direction)
-        && (this.currentFloor === passenger.targetFloor);
+    return this.passengers.filter((passenger) => {
+      return (
+        this.direction === passenger.direction &&
+        this.currentFloor === passenger.targetFloor
+      );
     });
   }
 
@@ -78,7 +87,7 @@ class Elevator {
     const leftCapacity = Elevator.CAPACITY - this.passengers.length;
     const tasks = this.getInPassenger().slice(0, leftCapacity - 1);
 
-    tasks.forEach(task => {
+    tasks.forEach((task) => {
       const index = this.manager.tasks.indexOf(task);
       this.manager.tasks.splice(index, 1);
       this.passengers.push(task);
@@ -90,16 +99,22 @@ class Elevator {
   handleOutPassenger() {
     const passengers = this.getOutPassenger();
 
-    passengers.forEach(passenger => {
+    passengers.forEach((passenger) => {
       const index = this.passengers.indexOf(passenger);
       this.passengers.splice(index, 1);
-    })
+    });
 
     this.displayHandling("OUT");
   }
 
   displayHandling(state) {
-    console.log(`[${this.ID}호기:${state.padEnd(4, " ")}]: ${this.currentFloor.toString().padStart(2, " ")}층 | 남은 거리: ${this.distance} | 남은 승객수: ${this.passengers.length} | 남은 작업수: ${this.manager.tasks.length}`)
+    console.log(
+      `[${this.ID}호기:${state.padEnd(4, " ")}]: ${this.currentFloor
+        .toString()
+        .padStart(2, " ")}층 | 남은 거리: ${this.distance} | 남은 승객수: ${
+        this.passengers.length
+      } | 남은 작업수: ${this.manager.tasks.length}`
+    );
   }
 }
 

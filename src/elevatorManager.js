@@ -5,11 +5,11 @@ const Passenger = require("./Passenger");
 class ElevatorManager {
   static DIRECTION = {
     [1]: "UP",
-    [-1]: "DOWN"
+    [-1]: "DOWN",
   };
 
   constructor(concurrency) {
-    this.concurrency = concurrency;    
+    this.concurrency = concurrency;
     this.tasks = [];
     this.setTasks();
   }
@@ -37,7 +37,9 @@ class ElevatorManager {
         }
 
         if (!(inPassengerCount || outPassengerCount)) {
-          elevator.displayHandling(ElevatorManager.DIRECTION[elevator.direction]);
+          elevator.displayHandling(
+            ElevatorManager.DIRECTION[elevator.direction]
+          );
         }
 
         if (this.tasks.length && !elevator.distance) {
@@ -64,12 +66,16 @@ class ElevatorManager {
   }
 
   displayTasks() {
-    console.log("##############################################################");
+    console.log(
+      "##############################################################"
+    );
     console.log(
       util.inspect(`남은 작업: ${this.tasks.length}`, INSPECT_OPTIONS),
-      util.inspect(this.tasks, INSPECT_OPTIONS),
+      util.inspect(this.tasks, INSPECT_OPTIONS)
     );
-    console.log("##############################################################");
+    console.log(
+      "##############################################################"
+    );
   }
 }
 
