@@ -1,96 +1,71 @@
-const util = require("util");
-const Passenger = require("./Passenger");
+const Elevator = require("./elevator");
 
 class ElevatorManager {
   static FILE_PATH = "./current-floor-list.json";
-  static DIRECTION = {
-    [1]: "UP",
-    [-1]: "DOWN",
-  };
 
-  constructor(size) {
-    this.size = size;
-    this.tasks = [];
-    this.setTasks();
+  constructor() {
+    this.elevators = [];
   }
 
-  setTasks() {
-    this.tasks.push(new Passenger({ currentFloor: 3, targetFloor: 9 }));
-    this.tasks.push(new Passenger({ currentFloor: 4, targetFloor: 6 }));
-    this.tasks.push(new Passenger({ currentFloor: 5, targetFloor: 2 }));
-    this.tasks.push(new Passenger({ currentFloor: 7, targetFloor: 4 }));
-    this.tasks.push(new Passenger({ currentFloor: 3, targetFloor: 9 }));
+  async assignElevator(passengers) {
+    const priorityPassenger = passengers[0];
+    let elevator = this.getClosestElevator(priorityPassenger);
+
+    if (elevator.isRunning) {
+      elevator = this.getRunnableElevator();
+    }
+
+    elevator.setDistance(priorityPassenger);
+    elevator.tasks = passengers;
+
+    elevator.setDirection(priorityPassenger.currentFloor);
+    await elevator.moveTo(priorityPassenger.currentFloor);
+
+    elevator.setDirection(priorityPassenger.targetFloor);
+    await elevator.moveTo(priorityPassenger.targetFloor);
   }
 
-  run(elevator) {
-    return new Promise((resolve, reject) => {
-      const intervalID = setInterval(() => {
-        const inPassengerCount = elevator.getInPassenger().length;
-        const outPassengerCount = elevator.getOutPassenger().length;
-
-        if (inPassengerCount) {
-          elevator.addPassengers();
-        }
-
-        if (outPassengerCount) {
-          elevator.removePassengers();
-        }
-
-        if (!(inPassengerCount || outPassengerCount)) {
-          elevator.display({
-            state: ElevatorManager.DIRECTION[elevator.direction],
-          });
-        }
-
-        if (this.tasks.length && !elevator.distance) {
-          elevator.setDirection();
-          elevator.setDistance();
-        }
-
-        elevator.currentFloor += elevator.direction;
-        elevator.distance -= 1;
-
-        if (!this.tasks.length && !elevator.passengers.length) {
-          resolve(intervalID);
-        }
-
-        if (elevator.currentFloor < 0 || elevator.distance < 0) {
-          reject(new Error("시스템 에러 발생"));
-        }
-      }, 1000);
-    });
-  }
-
-  stop(intervalID) {
-    clearInterval(intervalID);
-  }
-
-  displayTasks() {
-    console.log(
-      ` 남은 작업수: ${this.tasks.length} `.padStart(30, "#").padEnd(50, "#")
+  getClosestElevator(passenger) {
+    let closestElevator = this.elevators[0];
+    let minDistance = Math.abs(
+      passenger.currentFloor - closestElevator.currentFloor
     );
-    console.log(
-      util.inspect(this.tasks, {
-        showHidden: false,
-        depth: null,
-      })
-    );
-    console.log("#".padStart(50, "#"));
+
+    for (const elevator of this.elevators) {
+      const distance = Math.abs(passenger.currentFloor - elevator.currentFloor);
+
+      if (distance < minDistance) {
+        closestElevator = elevator;
+        minDistance = distance;
+      }
+    }
+
+    return closestElevator;
+  }
+
+  getRunnableElevator() {
+    return this.elevators.find((elevator) => !elevator.isRunning);
+  }
+
+  isAssignable() {
+    return this.elevators.some((elevator) => !elevator.isRunning);
   }
 
   async loadFloorState(fs) {
-    const states = await fs.readFile(ElevatorManager.FILE_PATH, {
+    const data = await fs.readFile(ElevatorManager.FILE_PATH, {
       encoding: "utf8",
     });
 
-    if (!states) {
-      return Array.from({ length: this.size }, (_, i) => ({
-        ID: i + 1,
-        currentFloor: 1,
-      }));
+    if (!data) {
+      this.elevators = [new Elevator(), new Elevator()];
+      return;
     }
 
-    return JSON.parse(states);
+    const states = JSON.parse(data);
+
+    this.elevators = states.map(
+      ({ ID, currentFloor }) => new Elevator({ ID, currentFloor })
+    );
   }
 
   async saveFloorState({ fs, elevators }) {

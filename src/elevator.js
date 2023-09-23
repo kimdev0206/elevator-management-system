@@ -1,119 +1,125 @@
 class Elevator {
   static CAPACITY = 5;
-  distance = 0;
-  direction = 1;
-  passengers = [];
+  static DIRECTION = {
+    [1]: "UP",
+    [-1]: "DOWN",
+  };
 
-  constructor(ID, startFloor, manager) {
+  constructor({ ID, currentFloor }) {
     this.ID = ID;
-    this.currentFloor = startFloor;
-    this.manager = manager;
-
-    this.setDirection();
-    this.setDistance();
+    this.currentFloor = currentFloor || 1;
+    this.tasks = [];
+    this.passengers = [];
+    this.direction = 1;
+    this.distance = 0;
+    this.isRunning = false;
   }
 
-  getTasksWithSameDirection({ reverse = false }) {
-    return this.manager.tasks
-      .filter((task) =>
-        reverse
-          ? this.direction !== task.direction
-          : this.direction === task.direction
-      )
-      .filter((task) =>
-        Math.sign(this.direction) > 0
-          ? this.currentFloor <= task.currentFloor
-          : this.currentFloor >= task.currentFloor
-      );
+  setDistance(passenger) {
+    this.distance =
+      Math.abs(passenger.currentFloor - this.currentFloor) +
+      Math.abs(passenger.targetFloor - passenger.currentFloor);
   }
 
-  setDirection() {
-    const latestTask = this.manager.tasks[0];
-
-    if (latestTask.currentFloor === this.currentFloor) {
-      this.direction = latestTask.direction;
+  setDirection(floor) {
+    if (floor === this.currentFloor) {
       return;
     }
 
-    this.direction = Math.sign(latestTask.currentFloor - this.currentFloor);
+    this.direction = Math.sign(floor - this.currentFloor);
   }
 
-  setDistance() {
-    let tasks = this.getTasksWithSameDirection({ reverse: false });
+  moveTo(floor) {
+    this.isRunning = true;
 
-    if (!tasks.length) {
-      tasks = this.getTasksWithSameDirection({ reverse: true });
-    }
+    return new Promise((resolve, reject) => {
+      const intervalID = setInterval(() => {
+        const isAddable = this.tasks.some((passenger) =>
+          this.isAddable(passenger)
+        );
 
-    const leftCapacity = Elevator.CAPACITY - this.passengers.length;
-    tasks = tasks.slice(0, leftCapacity - 1);
+        if (isAddable) {
+          this.tasks
+            .filter((passenger) => this.isAddable(passenger))
+            .forEach((passenger) => this.addPassenger(passenger));
 
-    let maxDistanceTask;
-    for (const task of tasks) {
-      const distance = Math.abs(task.targetFloor - task.currentFloor);
+          this.display({ state: "IN" });
+        }
 
-      if (this.distance < distance) {
-        this.distance = distance;
-        maxDistanceTask = task;
-      }
-    }
+        const isRemoveable = this.passengers.some((passenger) =>
+          this.isRemoveable(passenger)
+        );
 
-    if (this.direction === maxDistanceTask.direction) {
-      this.distance += Math.abs(
-        this.currentFloor - maxDistanceTask.currentFloor
-      );
-    }
-  }
+        if (isRemoveable) {
+          this.passengers
+            .filter((passenger) => this.isRemoveable(passenger))
+            .forEach((passenger) => this.removePassenger(passenger));
 
-  getInPassenger() {
-    return this.manager.tasks.filter((task) => {
-      return (
-        this.direction === task.direction &&
-        this.currentFloor === task.currentFloor
-      );
+          this.display({ state: "OUT" });
+        }
+
+        if (!(isAddable || isRemoveable)) {
+          this.display({
+            state: Elevator.DIRECTION[this.direction],
+          });
+        }
+
+        if (this.currentFloor === floor) {
+          this.isRunning = false;
+          clearInterval(intervalID);
+          return resolve();
+        }
+
+        if (this.currentFloor < 0 || this.distance < 0) {
+          clearInterval(intervalID);
+          return reject(new RangeError());
+        }
+
+        this.currentFloor += this.direction;
+        this.distance -= 1;
+      }, 1000);
     });
   }
 
-  getOutPassenger() {
-    return this.passengers.filter((passenger) => {
-      return (
-        this.direction === passenger.direction &&
-        this.currentFloor === passenger.targetFloor
-      );
-    });
+  isAddable(passenger) {
+    return (
+      passenger.direction === this.direction &&
+      passenger.currentFloor === this.currentFloor
+    );
   }
 
-  addPassengers() {
-    const leftCapacity = Elevator.CAPACITY - this.passengers.length;
-    const tasks = this.getInPassenger().slice(0, leftCapacity - 1);
-
-    tasks.forEach((task) => {
-      const index = this.manager.tasks.indexOf(task);
-      this.manager.tasks.splice(index, 1);
-      this.passengers.push(task);
-    });
-
-    this.display({ state: "IN" });
+  isRemoveable(passenger) {
+    return (
+      passenger.direction === this.direction &&
+      passenger.targetFloor === this.currentFloor
+    );
   }
 
-  removePassengers() {
-    const passengers = this.getOutPassenger();
+  addPassenger(passenger) {
+    this.passengers.push(passenger);
+  }
 
-    passengers.forEach((passenger) => {
-      const index = this.passengers.indexOf(passenger);
+  removePassenger(passenger) {
+    const index = this.passengers.indexOf(passenger);
+
+    if (index > -1) {
       this.passengers.splice(index, 1);
-    });
-
-    this.display({ state: "OUT" });
+    }
   }
 
+  /**
+   * TODO:
+   * 엘리베이터 관리 → 각 엘리베이터로 display 메소드가 변경되면서,
+   * 남은 작업수를 각 엘리베이터의 타이머 객체에 실시간으로 전달 하기 어려워짐.
+   * Events API를 적용해볼 수 있음.
+   */
   display({ state }) {
     const stateFormat = state.padEnd(4, " ");
     const currentFloorFormat = this.currentFloor.toString().padStart(2, " ");
     const distanceFormat = this.distance.toString().padStart(2, " ");
 
     console.log(
-      `[${this.ID}호기:${stateFormat}]: ${currentFloorFormat}층 | 남은 거리: ${distanceFormat} | 남은 승객수: ${this.passengers.length} | 남은 작업수: ${this.manager.tasks.length}`
+      `[${this.ID}호기:${stateFormat}]: ${currentFloorFormat}층 | 남은 거리: ${distanceFormat} | 남은 승객수: ${this.passengers.length}`
     );
   }
 }
