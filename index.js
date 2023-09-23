@@ -9,7 +9,7 @@ const size = 2;
 (async function main() {
   const manager = new ElevatorManager(size);
 
-  const elevatorStates = await manager.loadState(fs);
+  const elevatorStates = await manager.loadFloorState(fs);
   const elevators = [];
 
   while (elevatorStates.length) {
@@ -34,7 +34,7 @@ const size = 2;
       manager.stop(each.value);
     }
 
-    manager.saveState({ fs, elevators });
+    manager.saveFloorState({ fs, elevators });
   } catch (err) {
     console.error(err);
   } finally {

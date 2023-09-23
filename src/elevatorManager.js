@@ -1,5 +1,4 @@
 const util = require("util");
-const { INSPECT_OPTIONS } = require("./constants");
 const Passenger = require("./Passenger");
 
 class ElevatorManager {
@@ -30,17 +29,17 @@ class ElevatorManager {
         const outPassengerCount = elevator.getOutPassenger().length;
 
         if (inPassengerCount) {
-          elevator.handleInPassenger();
+          elevator.addPassengers();
         }
 
         if (outPassengerCount) {
-          elevator.handleOutPassenger();
+          elevator.removePassengers();
         }
 
         if (!(inPassengerCount || outPassengerCount)) {
-          elevator.displayHandling(
-            ElevatorManager.DIRECTION[elevator.direction]
-          );
+          elevator.display({
+            state: ElevatorManager.DIRECTION[elevator.direction],
+          });
         }
 
         if (this.tasks.length && !elevator.distance) {
@@ -68,18 +67,18 @@ class ElevatorManager {
 
   displayTasks() {
     console.log(
-      "##############################################################"
+      ` 남은 작업수: ${this.tasks.length} `.padStart(30, "#").padEnd(50, "#")
     );
     console.log(
-      util.inspect(`남은 작업: ${this.tasks.length}`, INSPECT_OPTIONS),
-      util.inspect(this.tasks, INSPECT_OPTIONS)
+      util.inspect(this.tasks, {
+        showHidden: false,
+        depth: null,
+      })
     );
-    console.log(
-      "##############################################################"
-    );
+    console.log("#".padStart(50, "#"));
   }
 
-  async loadState(fs) {
+  async loadFloorState(fs) {
     const states = await fs.readFile(ElevatorManager.FILE_PATH, {
       encoding: "utf8",
     });
@@ -94,15 +93,11 @@ class ElevatorManager {
     return JSON.parse(states);
   }
 
-  async saveState({ fs, elevators }) {
-    const states = [];
-
-    for (const { ID, currentFloor } of elevators) {
-      states.push({
-        ID,
-        currentFloor,
-      });
-    }
+  async saveFloorState({ fs, elevators }) {
+    const states = elevators.map(({ ID, currentFloor }) => ({
+      ID,
+      currentFloor,
+    }));
 
     await fs.writeFile(ElevatorManager.FILE_PATH, JSON.stringify(states));
   }

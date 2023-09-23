@@ -83,7 +83,7 @@ class Elevator {
     });
   }
 
-  handleInPassenger() {
+  addPassengers() {
     const leftCapacity = Elevator.CAPACITY - this.passengers.length;
     const tasks = this.getInPassenger().slice(0, leftCapacity - 1);
 
@@ -93,10 +93,10 @@ class Elevator {
       this.passengers.push(task);
     });
 
-    this.displayHandling("IN");
+    this.display({ state: "IN" });
   }
 
-  handleOutPassenger() {
+  removePassengers() {
     const passengers = this.getOutPassenger();
 
     passengers.forEach((passenger) => {
@@ -104,16 +104,16 @@ class Elevator {
       this.passengers.splice(index, 1);
     });
 
-    this.displayHandling("OUT");
+    this.display({ state: "OUT" });
   }
 
-  displayHandling(state) {
+  display({ state }) {
+    const stateFormat = state.padEnd(4, " ");
+    const currentFloorFormat = this.currentFloor.toString().padStart(2, " ");
+    const distanceFormat = this.distance.toString().padStart(2, " ");
+
     console.log(
-      `[${this.ID}호기:${state.padEnd(4, " ")}]: ${this.currentFloor
-        .toString()
-        .padStart(2, " ")}층 | 남은 거리: ${this.distance} | 남은 승객수: ${
-        this.passengers.length
-      } | 남은 작업수: ${this.manager.tasks.length}`
+      `[${this.ID}호기:${stateFormat}]: ${currentFloorFormat}층 | 남은 거리: ${distanceFormat} | 남은 승객수: ${this.passengers.length} | 남은 작업수: ${this.manager.tasks.length}`
     );
   }
 }
